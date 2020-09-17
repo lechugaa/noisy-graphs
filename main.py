@@ -33,7 +33,7 @@ if __name__ == '__main__':
     for delta in deltas:
         print(f'Edge {delta[0]} changes entropy by {delta[1]:.4f}')
 
-    print('-------------Smallworld Change List------------')
+    print('------------Smallworld Change List----------')
     ws = nx.watts_strogatz_graph(15, 3, 0.5)
     ws_entropy = entropy(ws)
     print(f'Entropy: {ws_entropy:.4f}')
