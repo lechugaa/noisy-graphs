@@ -2,6 +2,7 @@ import networkx as nx
 
 
 from entropy import entropy, entropy_change, entropy_change_list
+from utilities import get_undirected_graph_from_txt, negative_graph
 
 
 if __name__ == '__main__':
@@ -40,3 +41,8 @@ if __name__ == '__main__':
     ws_deltas = entropy_change_list(ws)
     for delta in ws_deltas:
         print(f'Edge {delta[0]} changes entropy by {delta[1]:.4f}')
+
+    print('------------Importing graph from text----------')
+    g_actors = get_undirected_graph_from_txt('data/actor.edgelist.txt')
+    print(f'Number of nodes: {g_actors.number_of_nodes()}')
+    print(f'Number of edges: {g_actors.number_of_edges()}')
