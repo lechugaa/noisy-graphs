@@ -2,7 +2,7 @@ from igraph import Graph
 from math import log2
 
 
-def _translate_graph(graph):
+def __translate_graph(graph):
     h = Graph()
     h.add_vertices(list(graph.nodes))
     h.add_edges(list(graph.edges))
@@ -10,7 +10,7 @@ def _translate_graph(graph):
 
 
 def orbits(graph):
-    g = _translate_graph(graph)
+    g = __translate_graph(graph)
     no_nodes = graph.number_of_nodes()
     g_auts = g.get_automorphisms_vf2()
 
