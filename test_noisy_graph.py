@@ -7,11 +7,16 @@ from noisy_graph import NoisyGraph
 class NoisyGraphTest(unittest.TestCase):
     def setUp(self):
         self.empty_graph = NoisyGraph()
+
         self.disconnected_hexagon = NoisyGraph()
         self.disconnected_hexagon.add_nodes_from([0, 1, 2, 3, 4, 5])
+
         self.noisy_hexagon = NoisyGraph()
         self.noisy_hexagon.add_edges_from([(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (0, 5)], True)
         self.noisy_hexagon.add_edges_from([(0, 2), (2, 4), (0, 4), (1, 3), (3, 5), (1, 5)], False)
+
+        self.incomplete_graph = NoisyGraph()
+        self.incomplete_graph.add_edges_from([(0, 1), (1, 2), (1, 3), (3, 4)], True)
 
     def test_empty_graph_nodes(self):
         assert self.empty_graph.number_of_nodes() == 0
@@ -137,6 +142,43 @@ class NoisyGraphTest(unittest.TestCase):
         mean = statistics.mean(uncertainties)
         std_dev = statistics.pstdev(uncertainties)
         self.assertEqual((mean, std_dev), self.noisy_hexagon.uncertainty_profile())
+
+    def test_missing_edges_for_node(self):
+        missing_edges_dict = {
+            0: [(0, 2), (0, 3), (0, 4)],
+            1: [(1, 4)],
+            2: [(0, 2), (2, 3), (2, 4)],
+            3: [(0, 3), (2, 3)],
+            4: [(0, 4), (1, 4), (2, 4)]
+        }
+
+        for node, edges in missing_edges_dict.items():
+            missing_edges = self.incomplete_graph.missing_edges_for_node(node)
+            assert len(missing_edges) == len(edges)
+            for edge in edges:
+                self.assertTrue(edge in missing_edges)
+
+    def test_missing_edges_for_graph(self):
+        missing_edges = [(0, 2), (0, 3), (0, 4), (1, 4), (2, 3), (2, 4)]
+        graph_missing_edges = self.incomplete_graph.missing_edges()
+
+        self.assertTrue(len(missing_edges) == len(graph_missing_edges))
+        for edge in graph_missing_edges:
+            self.assertTrue(edge in missing_edges)
+
+    def test_random_missing_edges(self):
+        missing_edges = {(0, 2), (0, 3), (0, 4), (1, 4), (2, 3), (2, 4)}
+        graph_missing_edges = set(self.incomplete_graph.random_missing_edges(0.5))
+        self.assertTrue(len(missing_edges.intersection(graph_missing_edges)) == 3)
+
+    def test_add_random_missing_edges(self):
+        missing_edges = {(0, 2), (0, 3), (0, 4), (1, 4), (2, 3), (2, 4)}
+        fake_edges = set(self.incomplete_graph.edges_if(False))
+        self.assertTrue(len(missing_edges.intersection(fake_edges)) == 0)
+
+        self.incomplete_graph.add_random_missing_edges(0.5)
+        fake_edges = set(self.incomplete_graph.edges_if(False))
+        self.assertTrue(len(missing_edges.intersection(fake_edges)) == 3)
 
 
 if __name__ == '__main__':

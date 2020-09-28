@@ -1,4 +1,5 @@
 import statistics
+import random
 from math import log
 from scipy.special import comb
 
@@ -246,3 +247,53 @@ class NoisyGraph:
         mean = sum(uncertainties) / len(uncertainties)
         std_dev = statistics.pstdev(uncertainties)
         return mean, std_dev
+
+    def missing_edges_for_node(self, node):
+        """
+        Returns the edges the given node is missing to be
+        connected to all other nodes.
+        :param node: hashable
+        :return: list of 2-tuples
+        """
+        missing_edges = []
+        existing_edges = self.node_adjacency(node)
+        for node2 in self.nodes():
+            if node != node2:
+                edge = NoisyGraph.__get_edge(node, node2)
+                if edge not in existing_edges:
+                    missing_edges.append(edge)
+
+        return missing_edges
+
+    def missing_edges(self):
+        """
+        Returns the edges the graph is missing to be
+        complete graph.
+        :return: list of 2-tuples
+        """
+        missing_edges_set = set()
+        for node in self.nodes():
+            node_missing_edges = set(self.missing_edges_for_node(node))
+            missing_edges_set = missing_edges_set.union(node_missing_edges)
+
+        return list(missing_edges_set)
+
+    def random_missing_edges(self, fraction):
+        """
+        Returns a list containing a fraction of the graph's
+        missing edges.
+        :param fraction: floating number between 0 and 1
+        :return: a list tuples
+        """
+        missing_edges = self.missing_edges()
+        no_edges = round(len(missing_edges) * fraction)
+        return random.sample(missing_edges, no_edges)
+
+    def add_random_missing_edges(self, fraction):
+        """
+        Adds a fraction of the missing edges to the graph
+        as fake edges.
+        :param fraction: floating number between 0 and 1
+        """
+        missing_edges = self.random_missing_edges(fraction)
+        self.add_edges_from(missing_edges, real=False)
