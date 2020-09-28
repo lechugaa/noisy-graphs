@@ -101,7 +101,7 @@ class NoisyGraphTest(unittest.TestCase):
 
     def test_number_of_edges_for_node(self):
         for node in self.noisy_hexagon.nodes():
-            real, fake, total =  self.noisy_hexagon.number_of_edges_for_node(node)
+            real, fake, total = self.noisy_hexagon.number_of_edges_for_node(node)
             assert real == 2
             assert fake == 2
             assert total == 4
@@ -129,11 +129,11 @@ class NoisyGraphTest(unittest.TestCase):
         self.assertTrue(self.noisy_hexagon.node_uncertainty(10) is None)
 
     def test_node_uncertainties(self):
-        uncertainties = [log(6, 2) for node in self.noisy_hexagon.nodes()]
+        uncertainties = [log(6, 2) for _ in self.noisy_hexagon.nodes()]
         self.assertEqual(uncertainties, self.noisy_hexagon.node_uncertainties())
 
     def test_uncertainty_profile(self):
-        uncertainties = [log(6, 2) for node in self.noisy_hexagon.nodes()]
+        uncertainties = [log(6, 2) for _ in self.noisy_hexagon.nodes()]
         mean = statistics.mean(uncertainties)
         std_dev = statistics.pstdev(uncertainties)
         self.assertEqual((mean, std_dev), self.noisy_hexagon.uncertainty_profile())
