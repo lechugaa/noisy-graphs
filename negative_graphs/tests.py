@@ -1,7 +1,7 @@
 import statistics
 import unittest
 from math import log
-from noisy_graph import NoisyGraph
+from negative_graphs.noisy_graph import NoisyGraph
 
 
 class NoisyGraphTest(unittest.TestCase):
