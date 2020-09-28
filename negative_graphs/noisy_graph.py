@@ -162,7 +162,7 @@ class NoisyGraph:
             return None
 
         total = len(self.node_adjacency(node))
-        no_real_edges = len(self.node_adjacency_if(True))
+        no_real_edges = len(self.node_adjacency_if(node, True))
         no_fake_edges = total - no_real_edges
         return no_real_edges, no_fake_edges, total
 
