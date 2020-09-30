@@ -1,7 +1,8 @@
 import statistics
 import unittest
 from math import log
-from negative_graphs.noisy_graph import NoisyGraph
+# noinspection PyUnresolvedReferences
+from noisy_graph import NoisyGraph
 
 
 class NoisyGraphTest(unittest.TestCase):
