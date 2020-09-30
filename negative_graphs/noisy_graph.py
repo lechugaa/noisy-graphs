@@ -117,6 +117,12 @@ class NoisyGraph:
         for node1, node2 in edge_list:
             self.add_edge(node1, node2, real)
 
+    def clear_fake_edges(self):
+        """Removes all fake edges from noisy graph"""
+        self.__fake_edges = {}
+        for node in self.nodes():
+            self.__fake_edges[node] = set()
+
     def node_adjacency_if(self, node, real=True):
         """Returns a set of all edges connected to node that satisfy the
         real condition.
@@ -268,7 +274,7 @@ class NoisyGraph:
     def missing_edges(self):
         """
         Returns the edges the graph is missing to be
-        complete graph.
+        a complete graph.
         :return: list of 2-tuples
         """
         missing_edges_set = set()
