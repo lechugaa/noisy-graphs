@@ -80,6 +80,10 @@ class NoisyGraphTest(unittest.TestCase):
             self.assertTrue(edge in self.disconnected_hexagon.edges_if(False))
             self.assertFalse(edge in self.disconnected_hexagon.edges_if(True))
 
+    def test_fake_edges_removal(self):
+        self.noisy_hexagon.clear_fake_edges()
+        assert len(self.noisy_hexagon.edges_if(False)) == 0
+
     def test_edge_addition_without_nodes(self):
         self.empty_graph.add_edge(0, 1, True)
         self.empty_graph.add_edge(1, 2, False)
