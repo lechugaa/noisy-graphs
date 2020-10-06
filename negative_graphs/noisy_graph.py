@@ -1,4 +1,5 @@
 import statistics
+import concurrent.futures
 import random
 from math import log
 from scipy.special import comb
@@ -281,6 +282,21 @@ class NoisyGraph:
         for node in self.nodes():
             node_missing_edges = set(self.missing_edges_for_node(node))
             missing_edges_set = missing_edges_set.union(node_missing_edges)
+
+        return list(missing_edges_set)
+
+    def concurrent_missing_edges(self):
+        """
+        Returns the edges the graph is missing to be
+        a complete graph.
+        :return: list of 2-tuples
+        """
+        missing_edges_set = set()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            results = [executor.submit(self.missing_edges_for_node, node) for node in self.nodes()]
+
+            for f in concurrent.futures.as_completed(results):
+                missing_edges_set = missing_edges_set.union(set(f.result()))
 
         return list(missing_edges_set)
 
