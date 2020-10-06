@@ -23,3 +23,19 @@ def get_undirected_graph_from_txt(path):
     file.close()
 
     return graph
+
+
+def dict_squared_error_profile(dict1, dict2):
+    total_squared_error = 0
+    min_squared_error = float('inf')
+    max_squared_error = float('-inf')
+
+    for key in dict1.keys():
+        squared_error = (dict1[key] - dict2[key]) ** 2
+        total_squared_error += squared_error
+        min_squared_error = min(squared_error, min_squared_error)
+        max_squared_error = max(squared_error, max_squared_error)
+
+    mean_squared_error = total_squared_error / len(dict1)
+
+    return mean_squared_error, min_squared_error, max_squared_error
