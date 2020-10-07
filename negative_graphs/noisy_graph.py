@@ -251,9 +251,12 @@ class NoisyGraph:
         :return: tuple of floats corresponding to (mean, std_dev)
         """
         uncertainties = self.node_uncertainties(base, exact)
-        mean = sum(uncertainties) / len(uncertainties)
+        mean = statistics.mean(uncertainties)
         std_dev = statistics.pstdev(uncertainties)
-        return mean, std_dev
+        minimum = min(uncertainties)
+        maximum = max(uncertainties)
+
+        return mean, std_dev, minimum, maximum
 
     def missing_edges_for_node(self, node):
         """

@@ -1,4 +1,5 @@
 import networkx as nx
+import statistics
 from tqdm import tqdm
 
 
@@ -39,3 +40,7 @@ def dict_squared_error_profile(dict1, dict2):
     mean_squared_error = total_squared_error / len(dict1)
 
     return mean_squared_error, min_squared_error, max_squared_error
+
+
+def dict_average(dict1):
+    return statistics.mean(dict1.values())

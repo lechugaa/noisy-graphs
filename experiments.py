@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
         # calculating uncertainty values
         graph_uncertainty = noisy_graph.uncertainty()
-        mean_uncertainty, std_dev_uncertainty = noisy_graph.uncertainty_profile()
+        mean_uncertainty, std_dev_uncertainty, _, _ = noisy_graph.uncertainty_profile()
 
         # calculating noisy centrality metrics
         graph = nx.Graph(noisy_graph.edges())
