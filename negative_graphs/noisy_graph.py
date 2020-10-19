@@ -275,6 +275,18 @@ class NoisyGraph:
 
         return missing_edges
 
+    def random_missing_edges_for_node(self, node, fraction):
+        """
+        Returns a list containing a fraction of the node's
+        missing edges.
+        :param node: hashable
+        :param fraction: floating number between 0 and 1
+        :return: a list tuples
+        """
+        missing_edges = self.missing_edges_for_node(node)
+        no_edges = round(len(missing_edges) * fraction)
+        return random.sample(missing_edges, no_edges)
+
     def missing_edges(self):
         """
         Returns the edges the graph is missing to be
@@ -322,3 +334,21 @@ class NoisyGraph:
         """
         missing_edges = self.random_missing_edges(fraction)
         self.add_edges_from(missing_edges, real=False)
+
+    def add_random_missing_edges_for_node(self, node, fraction):
+        """
+        Adds a fraction of the missing to node as fake edges.
+        :param node: hashable
+        :param fraction: floating number between 0 and 1
+        """
+        edges = self.random_missing_edges_for_node(node, fraction)
+        self.add_edges_from(edges, real=False)
+
+    def add_random_missing_edges_per_node(self, fraction):
+        """
+        Adds a fraction of the missing edges per node
+        to the graph as fake edges.
+        :param fraction: floating number between 0 and 1
+        """
+        for node in self.nodes():
+            self.add_random_missing_edges_for_node(node, fraction)
