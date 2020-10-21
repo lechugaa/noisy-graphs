@@ -335,12 +335,18 @@ class NoisyGraph:
         """
         missing_edges = self.missing_edges_for_node(node)
         no_existing_real_edges, no_existing_fake_edges, _ = self.number_of_edges_for_node(node)
+
+        # number that should exist at end of method
         total_fake_edges = round(fraction * no_existing_real_edges)
 
-        if total_fake_edges > no_existing_real_edges:
-            no_missing_fake_edges = total_fake_edges - no_existing_real_edges
-        else:
+        # number of edges missing to ensure total_fake_edges
+        no_missing_fake_edges = total_fake_edges - no_existing_fake_edges
+
+        if no_missing_fake_edges < 0:
             no_missing_fake_edges = 0
+
+        if no_missing_fake_edges > len(missing_edges):
+            no_missing_fake_edges = len(missing_edges)
 
         return random.sample(missing_edges, no_missing_fake_edges)
 
