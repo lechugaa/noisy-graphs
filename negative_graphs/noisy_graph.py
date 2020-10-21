@@ -275,18 +275,6 @@ class NoisyGraph:
 
         return missing_edges
 
-    def random_missing_edges_for_node(self, node, fraction):
-        """
-        Returns a list containing a fraction of the node's
-        missing edges.
-        :param node: hashable
-        :param fraction: floating number between 0 and 1
-        :return: a list tuples
-        """
-        missing_edges = self.missing_edges_for_node(node)
-        no_edges = round(len(missing_edges) * fraction)
-        return random.sample(missing_edges, no_edges)
-
     def missing_edges(self):
         """
         Returns the edges the graph is missing to be
@@ -335,20 +323,44 @@ class NoisyGraph:
         missing_edges = self.random_missing_edges(fraction)
         self.add_edges_from(missing_edges, real=False)
 
-    def add_random_missing_edges_for_node(self, node, fraction):
+    def fake_edges_ensuring_fraction(self, node, fraction):
         """
-        Adds a fraction of the missing to node as fake edges.
+        Returns a list of a node's missing edges. The amount of
+        missing edges that is returned is the necessary amount to
+        ensure that, once added, the number of fake edges is at least
+        equivalent to the fraction given of real edges.
+        :param node: hashable
+        :param fraction: floating number between 0 and 1
+        :return: a list tuples
+        """
+        missing_edges = self.missing_edges_for_node(node)
+        no_existing_real_edges, no_existing_fake_edges, _ = self.number_of_edges_for_node(node)
+        total_fake_edges = round(fraction * no_existing_real_edges)
+
+        if total_fake_edges > no_existing_real_edges:
+            no_missing_fake_edges = total_fake_edges - no_existing_real_edges
+        else:
+            no_missing_fake_edges = 0
+
+        return random.sample(missing_edges, no_missing_fake_edges)
+
+    def add_missing_edges_ensuring_fraction(self, node, fraction):
+        """
+        Adds fake edges to a node. The number of fake edges added
+        ensures that, once added, the number of fake edges is at least
+        equivalent to the fraction given of real edges.
         :param node: hashable
         :param fraction: floating number between 0 and 1
         """
-        edges = self.random_missing_edges_for_node(node, fraction)
+        edges = self.fake_edges_ensuring_fraction(node, fraction)
         self.add_edges_from(edges, real=False)
 
-    def add_random_missing_edges_per_node(self, fraction):
+    def add_missing_edges_per_node_ensuring_fraction(self, fraction):
         """
-        Adds a fraction of the missing edges per node
-        to the graph as fake edges.
+        Adds fake edges to each node node. The number of fake edges added
+        per node ensures that, once added, the number of fake edges is at
+        least equivalent to the fraction given of real edges.
         :param fraction: floating number between 0 and 1
         """
         for node in self.nodes():
-            self.add_random_missing_edges_for_node(node, fraction)
+            self.add_missing_edges_ensuring_fraction(node, fraction)
