@@ -124,6 +124,15 @@ class NoisyGraph:
         for node in self.nodes():
             self.__fake_edges[node] = set()
 
+    def node_neighbors_if(self, node, real=True):
+        graph_dictionary = self.__real_edges if real else self.__fake_edges
+        return graph_dictionary[node]
+
+    def node_neighbors(self, node):
+        real_neighbors = self.node_neighbors_if(node, real=True)
+        fake_neighbors = self.node_neighbors_if(node, real=True)
+        return real_neighbors.union(fake_neighbors)
+
     def node_adjacency_if(self, node, real=True):
         """Returns a set of all edges connected to node that satisfy the
         real condition.
