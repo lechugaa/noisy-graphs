@@ -5,17 +5,24 @@ from math import log
 from scipy.special import comb
 
 
-class NoisyGraph:
+from noisy_graphs.noisy_node import NoisyNode
+from noisy_graphs.heaps import MaxHeap, MinHeap
+
+
+class StochasticNoisyGraph:
     """
     An undirected graph where some of the edges
     contained are fake.
     """
-    def __init__(self):
+    def __init__(self, ftrp):
         """
         Initializes a noisy graph object.
         """
         self.__real_edges = {}
         self.__fake_edges = {}
+        self.__max_heap = MaxHeap()
+        self.__min_heap = MinHeap()
+        self.__ftrp = ftrp
 
     def nodes(self):
         """
@@ -59,7 +66,7 @@ class NoisyGraph:
         :param node2: hashable
         :return: a two-tuple with which elements are in increasing order
         """
-        return (node1, node2) if node1 < node2 else (node2, node1)
+        return (node1, node2) if node1.value < node2.value else (node2, node1)
 
     def edges_if(self, real=True):
         """
@@ -73,7 +80,7 @@ class NoisyGraph:
 
         for node1, nodes in graph_dictionary.items():
             for node2 in nodes:
-                edge = NoisyGraph.__get_edge(node1, node2)
+                edge = StochasticNoisyGraph.__get_edge(node1, node2)
                 edge_set.add(edge)
 
         return edge_set
@@ -155,7 +162,7 @@ class NoisyGraph:
             graph_dictionary = self.__real_edges if real else self.__fake_edges
             neighbors = graph_dictionary[node]
             for neighbor in neighbors:
-                edge = NoisyGraph.__get_edge(node, neighbor)
+                edge = StochasticNoisyGraph.__get_edge(node, neighbor)
                 adjacency_set.add(edge)
 
         return adjacency_set
@@ -229,7 +236,7 @@ class NoisyGraph:
         :return: integer
         """
         _, no_fake_edges, total_edges = self.number_of_edges()
-        no_hypotheses = NoisyGraph.__number_of_hypotheses(total_edges, no_fake_edges, exact)
+        no_hypotheses = StochasticNoisyGraph.__number_of_hypotheses(total_edges, no_fake_edges, exact)
         return log(no_hypotheses, base)
 
     def node_uncertainty(self, node, base=2, exact=True):
@@ -247,7 +254,7 @@ class NoisyGraph:
             return None
 
         _, no_fake_edges, total_edges = self.number_of_edges_for_node(node)
-        no_hypotheses = NoisyGraph.__number_of_hypotheses(total_edges, no_fake_edges, exact)
+        no_hypotheses = StochasticNoisyGraph.__number_of_hypotheses(total_edges, no_fake_edges, exact)
         return log(no_hypotheses, base)
 
     def node_uncertainties(self, base=2, exact=True):
@@ -295,7 +302,7 @@ class NoisyGraph:
         existing_edges = self.node_adjacency(node)
         for node2 in self.nodes():
             if node != node2:
-                edge = NoisyGraph.__get_edge(node, node2)
+                edge = StochasticNoisyGraph.__get_edge(node, node2)
                 if edge not in existing_edges:
                     missing_edges.append(edge)
 
@@ -311,21 +318,6 @@ class NoisyGraph:
         for node in self.nodes():
             node_missing_edges = set(self.missing_edges_for_node(node))
             missing_edges_set = missing_edges_set.union(node_missing_edges)
-
-        return list(missing_edges_set)
-
-    def concurrent_missing_edges(self):
-        """
-        Returns the edges the graph is missing to be
-        a complete graph.
-        :return: list of 2-tuples
-        """
-        missing_edges_set = set()
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            results = [executor.submit(self.missing_edges_for_node, node) for node in self.nodes()]
-
-            for f in concurrent.futures.as_completed(results):
-                missing_edges_set = missing_edges_set.union(set(f.result()))
 
         return list(missing_edges_set)
 
