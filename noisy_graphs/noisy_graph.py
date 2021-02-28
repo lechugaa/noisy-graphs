@@ -1,6 +1,4 @@
 import statistics
-import concurrent.futures
-import random
 from math import log
 from scipy.special import comb
 
@@ -10,13 +8,16 @@ class NoisyGraph:
     An undirected graph where some of the edges
     contained are fake.
     """
-    def __init__(self):
+    def __init__(self, ftrp):
         """
         Initializes a noisy graph object.
         """
         self.__real_edges = {}
         self.__fake_edges = {}
+        self.__sigmas = {}
+        self.__ftrp = ftrp
 
+    # MARK: Node methods
     def nodes(self):
         """
         Returns all the nodes in the graph
@@ -41,16 +42,7 @@ class NoisyGraph:
             self.__real_edges[node] = set()
             self.__fake_edges[node] = set()
 
-    def add_nodes_from(self, nodes):
-        """
-        Adds multiple nodes from a node list.
-        If a node already exists in the graph, it is not
-        added again.
-        :param nodes: a list of nodes
-        """
-        for node in nodes:
-            self.add_node(node)
-
+    # MARK: Edges methods
     @staticmethod
     def __get_edge(node1, node2):
         """
@@ -61,7 +53,7 @@ class NoisyGraph:
         """
         return (node1, node2) if node1 < node2 else (node2, node1)
 
-    def edges_if(self, real=True):
+    def edges_if(self, real):
         """
         Returns a set of all edges that satisfy the `real`
         condition.
@@ -113,27 +105,7 @@ class NoisyGraph:
             self.__fake_edges[node2].add(node1)
             self.__real_edges[node2].discard(node1)
 
-    def add_edges_from(self, edge_list, real):
-        """
-        Adds multiple edges to the graph. If the nodes in the edge
-        do not exists, they are added first to the graph. The `real`
-        parameter indicates whether the edge is real or fake. If the
-        edge already exists as the opposite (real or fake) it is updated.
-        :param edge_list: a list of tuples containing the edges as (node1, node2)
-        :param real: boolean
-        """
-        for node1, node2 in edge_list:
-            self.add_edge(node1, node2, real)
-
-    def clear_fake_edges(self):
-        """
-        Removes all fake edges from noisy graph
-        """
-        self.__fake_edges = {}
-        for node in self.nodes():
-            self.__fake_edges[node] = set()
-
-    def node_neighbors_if(self, node, real=True):
+    def node_neighbors_if(self, node, real):
         graph_dictionary = self.__real_edges if real else self.__fake_edges
         return graph_dictionary[node]
 
@@ -142,7 +114,7 @@ class NoisyGraph:
         fake_neighbors = self.node_neighbors_if(node, real=False)
         return real_neighbors.union(fake_neighbors)
 
-    def node_adjacency_if(self, node, real=True):
+    def node_adjacency_if(self, node, real):
         """
         Returns a set of all edges connected to node that satisfy the
         real condition.
@@ -173,7 +145,7 @@ class NoisyGraph:
     def number_of_edges(self):
         """
         Obtain the number of real, fake and total edges in the graph.
-        :return: 3-tuple
+        :return: 3-tuple (no_real_edges, no_fake_edges, total_edges)
         """
         total = len(self.edges())
         no_real_edges = len(self.edges_if(True))
@@ -195,6 +167,7 @@ class NoisyGraph:
         no_fake_edges = total - no_real_edges
         return no_real_edges, no_fake_edges, total
 
+    # MARK: Uncertainty methods
     @staticmethod
     def __number_of_hypotheses(total_edges, fake_edges, exact=True):
         """
@@ -284,115 +257,28 @@ class NoisyGraph:
 
         return mean, std_dev, minimum, maximum
 
-    def missing_edges_for_node(self, node):
-        """
-        Returns the edges the given node is missing to be
-        connected to all other nodes.
-        :param node: hashable
-        :return: list of 2-tuples
-        """
-        missing_edges = []
-        existing_edges = self.node_adjacency(node)
-        for node2 in self.nodes():
-            if node != node2:
-                edge = NoisyGraph.__get_edge(node, node2)
-                if edge not in existing_edges:
-                    missing_edges.append(edge)
+    # MARK: Graph construction method
+    def get_lowest_sigma_node(self):
+        node = min(self.__sigmas, key=self.__sigmas.get)
+        if self.__sigmas[node] >= 1:
+            return None
+        return node
 
-        return missing_edges
+    def __set_node_sigma(self, node):
+        no_real_edges, no_fake_edges, _ = self.number_of_edges_for_node(node)
+        node_ftrp = no_fake_edges / no_real_edges
+        node_sigma = node_ftrp / self.__ftrp
+        self.__sigmas[node] = node_sigma
 
-    def missing_edges(self):
-        """
-        Returns the edges the graph is missing to be
-        a complete graph.
-        :return: list of 2-tuples
-        """
-        missing_edges_set = set()
-        for node in self.nodes():
-            node_missing_edges = set(self.missing_edges_for_node(node))
-            missing_edges_set = missing_edges_set.union(node_missing_edges)
+    def __maximize_node_sigma(self, node):
+        self.__sigmas[node] = float('inf')
 
-        return list(missing_edges_set)
+    def __normalize_nodes_sigma(self, nodes):
+        for node in nodes:
+            self.__set_node_sigma(node)
 
-    def concurrent_missing_edges(self):
-        """
-        Returns the edges the graph is missing to be
-        a complete graph.
-        :return: list of 2-tuples
-        """
-        missing_edges_set = set()
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            results = [executor.submit(self.missing_edges_for_node, node) for node in self.nodes()]
+    def add_node_with_neighbors(self, node, neighbors):
+        pass
 
-            for f in concurrent.futures.as_completed(results):
-                missing_edges_set = missing_edges_set.union(set(f.result()))
-
-        return list(missing_edges_set)
-
-    def random_missing_edges(self, fraction):
-        """
-        Returns a list containing a fraction of the graph's
-        missing edges.
-        :param fraction: floating number between 0 and 1
-        :return: a list tuples
-        """
-        missing_edges = self.missing_edges()
-        no_edges = round(len(missing_edges) * fraction)
-        return random.sample(missing_edges, no_edges)
-
-    def add_random_missing_edges(self, fraction):
-        """
-        Adds a fraction of the missing edges to the graph
-        as fake edges.
-        :param fraction: floating number between 0 and 1
-        """
-        missing_edges = self.random_missing_edges(fraction)
-        self.add_edges_from(missing_edges, real=False)
-
-    def fake_edges_ensuring_fraction(self, node, fraction):
-        """
-        Returns a list of a node's missing edges. The amount of
-        missing edges that is returned is the necessary amount to
-        ensure that, once added, the number of fake edges is at least
-        equivalent to the fraction given of real edges.
-        :param node: hashable
-        :param fraction: floating number between 0 and 1
-        :return: a list tuples
-        """
-        missing_edges = self.missing_edges_for_node(node)
-        no_existing_real_edges, no_existing_fake_edges, _ = self.number_of_edges_for_node(node)
-
-        # number that should exist at end of method
-        total_fake_edges = round(fraction * no_existing_real_edges)
-
-        # number of edges missing to ensure total_fake_edges
-        no_missing_fake_edges = total_fake_edges - no_existing_fake_edges
-
-        if no_missing_fake_edges < 0:
-            no_missing_fake_edges = 0
-
-        if no_missing_fake_edges > len(missing_edges):
-            no_missing_fake_edges = len(missing_edges)
-
-        return random.sample(missing_edges, no_missing_fake_edges)
-
-    def add_missing_edges_ensuring_fraction(self, node, fraction):
-        """
-        Adds fake edges to a node. The number of fake edges added
-        ensures that, once added, the number of fake edges is at least
-        equivalent to the fraction given of real edges.
-        :param node: hashable
-        :param fraction: floating number between 0 and 1
-        """
-        edges = self.fake_edges_ensuring_fraction(node, fraction)
-        self.add_edges_from(edges, real=False)
-
-    def add_missing_edges_per_node_ensuring_fraction(self, fraction):
-        """
-        Adds fake edges to each node node. The number of fake edges added
-        per node ensures that, once added, the number of fake edges is at
-        least equivalent to the fraction given of real edges.
-        :param fraction: floating number between 0 and 1
-        """
-        for node in self.nodes():
-            self.add_missing_edges_ensuring_fraction(node, fraction)
+    def add_fake_edge_to(self, node):
+        pass
