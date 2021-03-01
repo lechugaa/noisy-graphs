@@ -1,3 +1,4 @@
+import numpy as np
 import statistics
 from math import log
 from scipy.special import comb
@@ -105,11 +106,27 @@ class NoisyGraph:
             self.__fake_edges[node2].add(node1)
             self.__real_edges[node2].discard(node1)
 
+        self.set_node_sigma(node1)
+        self.set_node_sigma(node2)
+
     def node_neighbors_if(self, node, real):
+        """
+        Returns a set of all nodes that are neighbors of the passed one.
+        The 'real' parameter determines if fake neighbors are returned
+        or the real ones.
+        :param node: hashable
+        :param real: boolean
+        :return: list of nodes
+        """
         graph_dictionary = self.__real_edges if real else self.__fake_edges
         return graph_dictionary[node]
 
     def node_neighbors(self, node):
+        """
+        Returns a set of all nodes that are neighbors of the passed one.
+        :param node: hashable
+        :return: list of nodes
+        """
         real_neighbors = self.node_neighbors_if(node, real=True)
         fake_neighbors = self.node_neighbors_if(node, real=False)
         return real_neighbors.union(fake_neighbors)
@@ -147,6 +164,8 @@ class NoisyGraph:
         Obtain the number of real, fake and total edges in the graph.
         :return: 3-tuple (no_real_edges, no_fake_edges, total_edges)
         """
+
+        # TODO: Can be improved by using node neighbors instead
         total = len(self.edges())
         no_real_edges = len(self.edges_if(True))
         no_fake_edges = total - no_real_edges
@@ -162,8 +181,8 @@ class NoisyGraph:
         if node not in self.nodes():
             return None
 
-        total = len(self.node_adjacency(node))
-        no_real_edges = len(self.node_adjacency_if(node, True))
+        total = len(self.node_neighbors(node))
+        no_real_edges = len(self.node_neighbors_if(node, True))
         no_fake_edges = total - no_real_edges
         return no_real_edges, no_fake_edges, total
 
@@ -258,27 +277,55 @@ class NoisyGraph:
         return mean, std_dev, minimum, maximum
 
     # MARK: Graph construction method
-    def get_lowest_sigma_node(self):
-        node = min(self.__sigmas, key=self.__sigmas.get)
-        if self.__sigmas[node] >= 1:
-            return None
-        return node
-
-    def __set_node_sigma(self, node):
+    def set_node_sigma(self, node):
         no_real_edges, no_fake_edges, _ = self.number_of_edges_for_node(node)
         node_ftrp = no_fake_edges / no_real_edges
         node_sigma = node_ftrp / self.__ftrp
         self.__sigmas[node] = node_sigma
 
-    def __maximize_node_sigma(self, node):
-        self.__sigmas[node] = float('inf')
+    def get_node_sigma(self, node):
+        return self.__sigmas[node]
 
-    def __normalize_nodes_sigma(self, nodes):
-        for node in nodes:
-            self.__set_node_sigma(node)
+    def number_of_fake_edges_to_add(self, no_real_edges):
+        sample = np.random.random(no_real_edges)
+        result = np.where(sample <= self.__ftrp)
+        return len(result[0])
+
+    def missing_neighbors_for_node(self, node):
+        """
+        Returns the nodes the given node is missing to be
+        connected to all other ones along with their respective
+        sigma
+        :param node: hashable
+        :return: list of 2-tuples
+        """
+        missing_neighbors = []
+        existing_neighbors = self.node_neighbors(node)
+        for node2 in self.nodes():
+            if node != node2 and node2 not in existing_neighbors:
+                sigma2 = self.get_node_sigma(node2)
+                missing_neighbors.append((sigma2, node2))
+
+        missing_neighbors.sort()
+        return missing_neighbors
 
     def add_node_with_neighbors(self, node, neighbors):
-        pass
+        for neighbor in neighbors:
+            self.add_edge(node1=node, node2=neighbor, real=True)
 
-    def add_fake_edge_to(self, node):
-        pass
+        node_sigma = self.get_node_sigma(node)
+        if node_sigma < 1.0:
+            no_real_edges = len(neighbors)
+            no_fake_edges = self.number_of_fake_edges_to_add(no_real_edges)
+            missing_neighbors = self.missing_neighbors_for_node(node)
+
+            added_edges = 0
+            for neighbor_sigma, missing_neighbor in missing_neighbors:
+                # checks if missing edges have been added or if remaining
+                # neighbors or node already have a sigma greater or equal to 1.0
+                if added_edges >= no_fake_edges or neighbor_sigma >= 1.0 or node_sigma >= 1.0:
+                    return
+
+                self.add_edge(node1=node, node2=missing_neighbor, real=False)
+                node_sigma = self.get_node_sigma(node)
+                added_edges += 1
