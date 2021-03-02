@@ -14,7 +14,8 @@ if __name__ == '__main__':
     random.seed(seed)
     numpy.random.seed(seed)
 
-    m = 20
+    p_rewiring = 0.25
+    k = 10
     graph_sizes = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
     centrality_algorithms = [centrality.degree_centrality,
                              centrality.closeness_centrality,
@@ -26,11 +27,11 @@ if __name__ == '__main__':
           'graph_uncertainty,mean_uncertainty,std_dev_uncertainty,min_uncertainty,max_uncertainty,'
           'centrality_metric,mean_se_value,min_se_value,max_se_value')
 
-    # set of experiments for every graph size
+    # set of old_experiments for every graph size
     for graph_size in graph_sizes:
 
         # generating original graph
-        graph = nx.barabasi_albert_graph(graph_size, m, seed)
+        graph = nx.watts_strogatz_graph(graph_size, k, p_rewiring, seed)
 
         # obtaining original centrality metrics
         original_metrics = {alg.__name__: alg(graph) for alg in centrality_algorithms}

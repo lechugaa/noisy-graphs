@@ -14,24 +14,23 @@ if __name__ == '__main__':
     random.seed(seed)
     numpy.random.seed(seed)
 
-    p_rewiring = 0.25
-    k = 10
-    graph_sizes = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
+    edge_probabilities = [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50]
+    graph_size = 250
     centrality_algorithms = [centrality.degree_centrality,
                              centrality.closeness_centrality,
                              centrality.betweenness_centrality,
                              centrality.eigenvector_centrality]
 
     # printing headers
-    print('graph_size,fraction,no_edges,'
+    print('edge_probability,fraction,no_edges,'
           'graph_uncertainty,mean_uncertainty,std_dev_uncertainty,min_uncertainty,max_uncertainty,'
           'centrality_metric,mean_se_value,min_se_value,max_se_value')
 
-    # set of experiments for every graph size
-    for graph_size in graph_sizes:
+    # set of old_experiments for every graph size
+    for edge_probability in edge_probabilities:
 
         # generating original graph
-        graph = nx.watts_strogatz_graph(graph_size, k, p_rewiring, seed)
+        graph = nx.erdos_renyi_graph(graph_size, edge_probability, seed)
 
         # obtaining original centrality metrics
         original_metrics = {alg.__name__: alg(graph) for alg in centrality_algorithms}
@@ -73,7 +72,7 @@ if __name__ == '__main__':
                 modified_metrics = alg(graph)
                 mean_se, min_se, max_se = dict_squared_error_profile(modified_metrics, original_metrics[alg.__name__])
 
-                print(graph_size, fraction, graph.number_of_edges(),
+                print(edge_probability, fraction, graph.number_of_edges(),
                       graph_uncertainty, mean_uncertainty, std_dev_uncertainty, min_uncertainty, max_uncertainty,
                       alg.__name__, mean_se, min_se, max_se,
                       sep=',')

@@ -14,23 +14,23 @@ if __name__ == '__main__':
     random.seed(seed)
     numpy.random.seed(seed)
 
-    p_edge_creation = 0.25
-    graph_sizes = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
+    ms = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+    graph_size = 250
     centrality_algorithms = [centrality.degree_centrality,
                              centrality.closeness_centrality,
                              centrality.betweenness_centrality,
                              centrality.eigenvector_centrality]
 
     # printing headers
-    print('graph_size,fraction,no_edges,'
+    print('m,fraction,no_edges,'
           'graph_uncertainty,mean_uncertainty,std_dev_uncertainty,min_uncertainty,max_uncertainty,'
           'centrality_metric,mean_se_value,min_se_value,max_se_value')
 
-    # set of experiments for every graph size
-    for graph_size in graph_sizes:
+    # set of old_experiments for every graph size
+    for m in ms:
 
         # generating original graph
-        graph = nx.erdos_renyi_graph(graph_size, p_edge_creation, seed)
+        graph = nx.barabasi_albert_graph(graph_size, m, seed)
 
         # obtaining original centrality metrics
         original_metrics = {alg.__name__: alg(graph) for alg in centrality_algorithms}
@@ -72,7 +72,7 @@ if __name__ == '__main__':
                 modified_metrics = alg(graph)
                 mean_se, min_se, max_se = dict_squared_error_profile(modified_metrics, original_metrics[alg.__name__])
 
-                print(graph_size, fraction, graph.number_of_edges(),
+                print(m, fraction, graph.number_of_edges(),
                       graph_uncertainty, mean_uncertainty, std_dev_uncertainty, min_uncertainty, max_uncertainty,
                       alg.__name__, mean_se, min_se, max_se,
                       sep=',')
