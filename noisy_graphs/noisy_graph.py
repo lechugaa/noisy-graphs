@@ -286,6 +286,9 @@ class NoisyGraph:
     def get_node_sigma(self, node):
         return self.__sigmas[node]
 
+    def get_graph_sigmas(self):
+        return list(self.__sigmas.values())
+
     def number_of_fake_edges_to_add(self, no_real_edges):
         sample = np.random.random(no_real_edges)
         result = np.where(sample <= self.__ftrp)
