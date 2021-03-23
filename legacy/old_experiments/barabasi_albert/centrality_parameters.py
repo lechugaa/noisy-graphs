@@ -3,35 +3,31 @@ import random
 import numpy
 
 
-from negative_graphs.noisy_graph import NoisyGraph
+from legacy.negative_graphs.noisy_graph import NoisyGraph
 from networkx.algorithms import centrality
-from negative_graphs.utilities import dict_squared_error_profile
+from legacy.negative_graphs.utilities import dict_squared_error_profile
 
 
 if __name__ == '__main__':
 
-    # experimental setup
     seed = 200494
     random.seed(seed)
     numpy.random.seed(seed)
 
+    ms = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+    graph_size = 250
     centrality_algorithms = [centrality.degree_centrality,
                              centrality.closeness_centrality,
                              centrality.betweenness_centrality,
                              centrality.eigenvector_centrality]
 
-    graph_sizes = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
-
     # printing headers
-    print('graph_size,real_fraction,no_edges,'
+    print('m,fraction,no_edges,'
           'graph_uncertainty,mean_uncertainty,std_dev_uncertainty,min_uncertainty,max_uncertainty,'
           'centrality_metric,mean_se_value,min_se_value,max_se_value')
 
-    # model setup
-    m = 20
-
     # set of old_experiments for every graph size
-    for graph_size in graph_sizes:
+    for m in ms:
 
         # generating original graph
         graph = nx.barabasi_albert_graph(graph_size, m, seed)
@@ -43,19 +39,32 @@ if __name__ == '__main__':
         noisy_graph = NoisyGraph()
         noisy_graph.add_edges_from(graph.edges, real=True)
 
+        # obtaining missing edges list
+        missing_edges = noisy_graph.missing_edges()
+        random.shuffle(missing_edges)
+
+        # starting counters
+        no_missing_edges = len(missing_edges)
+        start_index = 0
+
         # generating 20 observations
         for i in range(0, 101, 5):
-            # obtaining fraction
+            # obtaining ending index
             fraction = i / 100
+            end_index = round(no_missing_edges * fraction)
 
             # adding edges from missing_edges list
-            noisy_graph.add_missing_edges_per_node_ensuring_fraction(fraction)
+            edges_to_add = missing_edges[start_index:end_index]
+            noisy_graph.add_edges_from(edges_to_add, real=False)
+
+            # updating start index
+            start_index = end_index
 
             # calculating uncertainty values
             graph_uncertainty = noisy_graph.uncertainty()
             mean_uncertainty, std_dev_uncertainty, min_uncertainty, max_uncertainty = noisy_graph.uncertainty_profile()
 
-            # disturbing graph
+            # creating noisy graph
             graph = nx.Graph(noisy_graph.edges())
 
             # iterating over centrality algorithms
@@ -63,7 +72,7 @@ if __name__ == '__main__':
                 modified_metrics = alg(graph)
                 mean_se, min_se, max_se = dict_squared_error_profile(modified_metrics, original_metrics[alg.__name__])
 
-                print(graph_size, fraction, graph.number_of_edges(),
+                print(m, fraction, graph.number_of_edges(),
                       graph_uncertainty, mean_uncertainty, std_dev_uncertainty, min_uncertainty, max_uncertainty,
                       alg.__name__, mean_se, min_se, max_se,
                       sep=',')

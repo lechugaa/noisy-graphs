@@ -1,8 +1,8 @@
 import networkx as nx
 
 
-from negative_graphs.entropy import entropy, entropy_change, entropy_change_list
-from negative_graphs.utilities import get_undirected_graph_from_txt
+from legacy.negative_graphs.entropy import entropy, entropy_change, entropy_change_list
+from legacy.negative_graphs.utilities import get_undirected_graph_from_txt
 
 if __name__ == '__main__':
 

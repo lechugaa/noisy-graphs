@@ -3,9 +3,9 @@ import random
 import numpy
 
 
-from negative_graphs.noisy_graph import NoisyGraph
+from legacy.negative_graphs.noisy_graph import NoisyGraph
 from networkx.algorithms import centrality
-from negative_graphs.utilities import dict_squared_error_profile
+from legacy.negative_graphs.utilities import dict_squared_error_profile
 
 
 if __name__ == '__main__':
@@ -14,7 +14,8 @@ if __name__ == '__main__':
     random.seed(seed)
     numpy.random.seed(seed)
 
-    edge_probabilities = [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50]
+    rewiring_probabilities = [0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55]
+    k = 10
     graph_size = 250
     centrality_algorithms = [centrality.degree_centrality,
                              centrality.closeness_centrality,
@@ -22,15 +23,15 @@ if __name__ == '__main__':
                              centrality.eigenvector_centrality]
 
     # printing headers
-    print('edge_probability,fraction,no_edges,'
+    print('rewiring_probability,fraction,no_edges,'
           'graph_uncertainty,mean_uncertainty,std_dev_uncertainty,min_uncertainty,max_uncertainty,'
           'centrality_metric,mean_se_value,min_se_value,max_se_value')
 
     # set of old_experiments for every graph size
-    for edge_probability in edge_probabilities:
+    for rewiring_probability in rewiring_probabilities:
 
         # generating original graph
-        graph = nx.erdos_renyi_graph(graph_size, edge_probability, seed)
+        graph = nx.watts_strogatz_graph(graph_size, k, rewiring_probability, seed)
 
         # obtaining original centrality metrics
         original_metrics = {alg.__name__: alg(graph) for alg in centrality_algorithms}
@@ -72,7 +73,7 @@ if __name__ == '__main__':
                 modified_metrics = alg(graph)
                 mean_se, min_se, max_se = dict_squared_error_profile(modified_metrics, original_metrics[alg.__name__])
 
-                print(edge_probability, fraction, graph.number_of_edges(),
+                print(rewiring_probability, fraction, graph.number_of_edges(),
                       graph_uncertainty, mean_uncertainty, std_dev_uncertainty, min_uncertainty, max_uncertainty,
                       alg.__name__, mean_se, min_se, max_se,
                       sep=',')

@@ -3,9 +3,9 @@ import random
 import numpy
 
 
-from negative_graphs.noisy_graph import NoisyGraph
+from legacy.negative_graphs.noisy_graph import NoisyGraph
 from networkx.algorithms import centrality
-from negative_graphs.utilities import dict_squared_error_profile
+from legacy.negative_graphs.utilities import dict_squared_error_profile
 
 
 if __name__ == '__main__':
@@ -14,8 +14,7 @@ if __name__ == '__main__':
     random.seed(seed)
     numpy.random.seed(seed)
 
-    p_rewiring = 0.25
-    k = 10
+    m = 20
     graph_sizes = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
     centrality_algorithms = [centrality.degree_centrality,
                              centrality.closeness_centrality,
@@ -31,7 +30,7 @@ if __name__ == '__main__':
     for graph_size in graph_sizes:
 
         # generating original graph
-        graph = nx.watts_strogatz_graph(graph_size, k, p_rewiring, seed)
+        graph = nx.barabasi_albert_graph(graph_size, m, seed)
 
         # obtaining original centrality metrics
         original_metrics = {alg.__name__: alg(graph) for alg in centrality_algorithms}

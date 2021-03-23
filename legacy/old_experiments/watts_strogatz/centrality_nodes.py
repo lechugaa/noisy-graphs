@@ -3,9 +3,9 @@ import random
 import numpy
 
 
-from negative_graphs.noisy_graph import NoisyGraph
+from legacy.negative_graphs.noisy_graph import NoisyGraph
 from networkx.algorithms import centrality
-from negative_graphs.utilities import dict_squared_error_profile
+from legacy.negative_graphs.utilities import dict_squared_error_profile
 
 
 if __name__ == '__main__':
@@ -14,24 +14,24 @@ if __name__ == '__main__':
     random.seed(seed)
     numpy.random.seed(seed)
 
-    rewiring_probability = 0.25
-    ks = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
-    graph_size = 250
+    p_rewiring = 0.25
+    k = 10
+    graph_sizes = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
     centrality_algorithms = [centrality.degree_centrality,
                              centrality.closeness_centrality,
                              centrality.betweenness_centrality,
                              centrality.eigenvector_centrality]
 
     # printing headers
-    print('k,fraction,no_edges,'
+    print('graph_size,fraction,no_edges,'
           'graph_uncertainty,mean_uncertainty,std_dev_uncertainty,min_uncertainty,max_uncertainty,'
           'centrality_metric,mean_se_value,min_se_value,max_se_value')
 
     # set of old_experiments for every graph size
-    for k in ks:
+    for graph_size in graph_sizes:
 
         # generating original graph
-        graph = nx.watts_strogatz_graph(graph_size, k, rewiring_probability, seed)
+        graph = nx.watts_strogatz_graph(graph_size, k, p_rewiring, seed)
 
         # obtaining original centrality metrics
         original_metrics = {alg.__name__: alg(graph) for alg in centrality_algorithms}
@@ -73,7 +73,7 @@ if __name__ == '__main__':
                 modified_metrics = alg(graph)
                 mean_se, min_se, max_se = dict_squared_error_profile(modified_metrics, original_metrics[alg.__name__])
 
-                print(k, fraction, graph.number_of_edges(),
+                print(graph_size, fraction, graph.number_of_edges(),
                       graph_uncertainty, mean_uncertainty, std_dev_uncertainty, min_uncertainty, max_uncertainty,
                       alg.__name__, mean_se, min_se, max_se,
                       sep=',')

@@ -3,7 +3,7 @@ import random
 import numpy
 
 
-from negative_graphs.noisy_graph import NoisyGraph
+from legacy.negative_graphs.noisy_graph import NoisyGraph
 
 if __name__ == '__main__':
 
