@@ -1,7 +1,10 @@
+import networkx as nx
 import numpy as np
 import statistics
 from math import log
+from networkx.algorithms import centrality
 from scipy.special import comb
+from scipy.stats import spearmanr, wasserstein_distance
 
 
 class NoisyGraph:
@@ -332,3 +335,54 @@ class NoisyGraph:
                 self.add_edge(node1=node, node2=missing_neighbor, real=False)
                 node_sigma = self.get_node_sigma(node)
                 added_edges += 1
+
+    def construct_graph(self, nx_graph):
+        for node in nx_graph.nodes:
+            neighbors = list(nx_graph.neighbors(node))
+            self.add_node_with_neighbors(node, neighbors)
+
+    # MARK: metrics
+    def get_sigmas_profile(self):
+        sigmas = self.get_graph_sigmas()
+        mean = np.mean(sigmas)
+        variance = np.var(sigmas)
+
+        return mean, variance
+
+    def get_uncertainty_profile(self):
+        uncertainties = self.node_uncertainties()
+        mean = np.mean(uncertainties)
+        variance = np.var(uncertainties)
+
+        return mean, variance
+
+    def __get_centrality_metrics(self, centrality_algorithm):
+        n_graph = nx.Graph(self.edges())
+        centrality_metric_list = centrality_algorithm(n_graph)
+
+        return centrality_metric_list
+
+    def __get_centrality_profile(self, original_graph, centrality_algorithm):
+        original_metrics = centrality_algorithm(original_graph)
+        noisy_metrics = self.__get_centrality_metrics(centrality_algorithm)
+
+        distance = wasserstein_distance(original_metrics, noisy_metrics)
+        correlation, _ = spearmanr(original_metrics, noisy_metrics)
+
+        original_mean = np.mean(original_metrics)
+        noisy_mean = np.mean(noisy_metrics)
+        mean_change = abs(noisy_mean - original_mean) / original_mean
+
+        return distance, correlation, mean_change
+
+    def degree_centrality_profile(self, original_graph):
+        return self.__get_centrality_profile(original_graph, centrality.degree_centrality)
+
+    def betweenness_profile(self, original_graph):
+        return self.__get_centrality_profile(original_graph, centrality.betweenness_centrality)
+
+    def closeness_profile(self, original_graph):
+        return self.__get_centrality_profile(original_graph, centrality.closeness_centrality)
+
+    def eigenvector_centrality_profile(self, original_graph):
+        return self.__get_centrality_profile(original_graph, centrality.eigenvector_centrality)
