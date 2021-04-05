@@ -339,6 +339,13 @@ class NoisyGraph:
     def construct_graph(self, nx_graph):
         for node in nx_graph.nodes:
             neighbors = list(nx_graph.neighbors(node))
+
+            # we do not want to deal with the case where
+            # a node is not connected in the graph
+            if len(neighbors) == 0:
+                nx_graph.remove_node(node)
+                continue
+
             self.add_node_with_neighbors(node, neighbors)
 
     # MARK: metrics
@@ -358,19 +365,37 @@ class NoisyGraph:
 
     def __get_centrality_metrics(self, centrality_algorithm):
         n_graph = nx.Graph(self.edges())
-        centrality_metric_list = centrality_algorithm(n_graph)
+        if centrality_algorithm.__name__ == 'eigenvector_centrality':
+            centrality_metric = centrality_algorithm(n_graph, max_iter=1000)
+        else:
+            centrality_metric = centrality_algorithm(n_graph)
 
-        return centrality_metric_list
+        return centrality_metric
 
     def __get_centrality_profile(self, original_graph, centrality_algorithm):
-        original_metrics = centrality_algorithm(original_graph)
+
+        # obtaining metrics
+        if centrality_algorithm.__name__ == 'eigenvector_centrality':
+            original_metrics = centrality_algorithm(original_graph, max_iter=1000)
+        else:
+            original_metrics = centrality_algorithm(original_graph)
+
         noisy_metrics = self.__get_centrality_metrics(centrality_algorithm)
 
-        distance = wasserstein_distance(original_metrics, noisy_metrics)
-        correlation, _ = spearmanr(original_metrics, noisy_metrics)
+        # obtaining values
+        original_values = list(original_metrics.values())
+        noisy_values = list(noisy_metrics.values())
 
-        original_mean = np.mean(original_metrics)
-        noisy_mean = np.mean(noisy_metrics)
+        # obtaining ordered keys
+        original_keys = sorted(original_metrics, key=original_metrics.get)
+        noisy_keys = sorted(noisy_metrics, key=noisy_metrics.get)
+
+        # obtaining results
+        distance = wasserstein_distance(original_values, noisy_values)
+        correlation, _ = spearmanr(original_keys, noisy_keys)
+
+        original_mean = np.mean(original_values)
+        noisy_mean = np.mean(noisy_values)
         mean_change = abs(noisy_mean - original_mean) / original_mean
 
         return distance, correlation, mean_change
