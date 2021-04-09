@@ -366,7 +366,7 @@ class NoisyGraph:
     def __get_centrality_metrics(self, centrality_algorithm):
         n_graph = nx.Graph(self.edges())
         if centrality_algorithm.__name__ == 'eigenvector_centrality':
-            centrality_metric = centrality_algorithm(n_graph, max_iter=1000)
+            centrality_metric = centrality_algorithm(n_graph, max_iter=10000)
         else:
             centrality_metric = centrality_algorithm(n_graph)
 
@@ -376,7 +376,7 @@ class NoisyGraph:
 
         # obtaining metrics
         if centrality_algorithm.__name__ == 'eigenvector_centrality':
-            original_metrics = centrality_algorithm(original_graph, max_iter=1000)
+            original_metrics = centrality_algorithm(original_graph, max_iter=10000)
         else:
             original_metrics = centrality_algorithm(original_graph)
 
