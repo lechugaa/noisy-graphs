@@ -47,6 +47,6 @@ if __name__ == '__main__':
             m = (m - 1) if (m == n) else m
 
             for r in fractions:
-                experiment_name = f"BA_{n}_{m}_{r}"
+                experiment_name = f"BA_{n}_{m_fraction}_{r}"
                 graph = nx.barabasi_albert_graph(n=n, m=m)
                 perform_experiment(original_graph=graph, ftrp=r, exp_name=experiment_name, data_path=data_path)

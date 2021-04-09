@@ -52,6 +52,6 @@ if __name__ == '__main__':
             for p in fractions:
                 for r in fractions:
 
-                    experiment_name = f"WS_{n}_{k}_{p}_{r}"
+                    experiment_name = f"WS_{n}_{k_fraction}_{p}_{r}"
                     graph = nx.watts_strogatz_graph(n=n, k=k, p=p)
                     perform_experiment(original_graph=graph, ftrp=r, exp_name=experiment_name, data_path=data_path)
