@@ -387,8 +387,8 @@ class NoisyGraph:
         noisy_values = list(noisy_metrics.values())
 
         # obtaining ordered keys
-        original_keys = sorted(original_metrics, key=original_metrics.get)
-        noisy_keys = sorted(noisy_metrics, key=noisy_metrics.get)
+        original_keys = [item[0] for item in sorted(original_metrics.items(), key=lambda x: (x[1], x[0]))]
+        noisy_keys = [item[0] for item in sorted(noisy_metrics.items(), key=lambda x: (x[1], x[0]))]
 
         # obtaining results
         distance = wasserstein_distance(original_values, noisy_values)
