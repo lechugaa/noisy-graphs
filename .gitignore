@@ -131,3 +131,4 @@ dmypy.json
 # Datasets
 data/
 /analysis/images/Thumbs.db
+/raw_data/*
