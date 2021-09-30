@@ -4,7 +4,7 @@ import statistics
 from math import log
 from networkx.algorithms import centrality
 from scipy.special import comb
-from scipy.stats import spearmanr, wasserstein_distance
+from scipy.stats import wasserstein_distance
 
 
 class NoisyGraph:
@@ -372,6 +372,22 @@ class NoisyGraph:
 
         return centrality_metric
 
+    @staticmethod
+    def __get_spearman_ordering_correlation(a, b):
+        n = len(a)
+        a_indices = {}
+        b_indices = {}
+
+        # obtaining indices of a an b
+        for index, vertex in enumerate(zip(a, b)):
+            a_indices[vertex[0]] = index
+            b_indices[vertex[1]] = index
+
+        # obtaining sum_d_squared
+        sum_d_squared = sum((a_indices[vertex] - b_indices[vertex]) ** 2 for vertex in range(n))
+
+        return 1 - ((6 * sum_d_squared) / (n * (n ** 2 - 1)))
+
     def __get_centrality_profile(self, original_graph, centrality_algorithm):
 
         # obtaining metrics
@@ -392,7 +408,7 @@ class NoisyGraph:
 
         # obtaining results
         distance = wasserstein_distance(original_values, noisy_values)
-        correlation, _ = spearmanr(original_keys, noisy_keys)
+        correlation = NoisyGraph.__get_spearman_ordering_correlation(original_keys, noisy_keys)
 
         original_mean = np.mean(original_values)
         noisy_mean = np.mean(noisy_values)
