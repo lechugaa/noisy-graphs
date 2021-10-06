@@ -38,13 +38,13 @@ if __name__ == '__main__':
     # experiments
     for n in graph_sizes:
 
-        # setting seeds for reproducibility
-        random.seed(seed)
-        numpy.random.seed(seed)
-
         # iterations
         for p in fractions:
             for r in fractions:
+                # setting seeds for reproducibility
+                random.seed(seed)
+                numpy.random.seed(seed)
+
                 experiment_name = f"ER_{n}_{p}_{r}"
                 graph = nx.erdos_renyi_graph(n=n, p=p)
                 perform_experiment(original_graph=graph, ftrp=r, exp_name=experiment_name, data_path=data_path)
