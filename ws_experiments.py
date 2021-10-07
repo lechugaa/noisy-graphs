@@ -38,11 +38,6 @@ if __name__ == '__main__':
 
     # experiments
     for n in graph_sizes:
-
-        # setting seeds for reproducibility
-        random.seed(seed)
-        numpy.random.seed(seed)
-
         # iterations
         for k_fraction in fractions:
 
@@ -51,6 +46,9 @@ if __name__ == '__main__':
 
             for p in fractions:
                 for r in fractions:
+                    # setting seeds for reproducibility
+                    random.seed(seed)
+                    numpy.random.seed(seed)
 
                     experiment_name = f"WS_{n}_{k_fraction}_{p}_{r}"
                     graph = nx.watts_strogatz_graph(n=n, k=k, p=p)
