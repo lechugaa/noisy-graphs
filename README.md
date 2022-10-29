@@ -1,6 +1,6 @@
 # Graph Privacy
 
-## Summary
+## Summary 
 
 Advances in graph theory and the increase in available computing power have allowed the study and simulation of complex
 systems that were previously out of technological reach. Despite the various benefits that this has brought to society,
@@ -28,6 +28,8 @@ modeled system in terms of the relative importance of the vertices with respect 
 closeness, and betweenness centralities. To quantify this utility, this paper calculates the Spearman's rank correlation
 coefficient on the ordering of the vertices, with respect to the previously mentioned centrality metrics, between the
 noisy graph and a traditional graph without uncertainty.
+
+[Link to the full thesis](https://github.com/lechugaa/noisy-graphs/blob/master/thesis.pdf)
 
 ## Configuration
 
